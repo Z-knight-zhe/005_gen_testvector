@@ -79,9 +79,8 @@ def dcp_cpr_memory_offset(f_reg_config, frm):
         cpr_base_addr = 0x90000000
         write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr)
 
-if __name__ == '__main__':
-    global count
-    count = 0
+#将dat文件中的寄存器offset信息写入到addr.txt中
+def f_addr_write():
     f_addr = open(ADDR, "w")
     f_addr.write("sync start 0x0\n")
     f_addr.write("lcu_count_clear 0x14\n")
@@ -94,16 +93,27 @@ if __name__ == '__main__':
                 f_addr.write(line)
     f_addr.close()
 
+def sed_ctx_map(ddr_map_dict):
+    ddr_map_dict["ctx_map_mv"] = ddr_map_dict["ctx_map_map_mv"]
+    ddr_map_dict["ctx_map_scu"] = ddr_map_dict["ctx_map_map_scu"]
+    ddr_map_dict["ctx_map_refi"] =  ddr_map_dict["ctx_map_map_refi"]
+    ddr_map_dict["ctx_map_cu_mode"] = ddr_map_dict["ctx_map_map_cu_mode"]
+    ddr_map_dict["list_ptr_0_skip"] = ddr_map_dict["list_ptr_0"]
+    ddr_map_dict["ctx_pinter_refp_map_mv_0"] = ddr_map_dict["ctx_pinter_refp_map_mv_0_skip"]
+    ddr_map_dict["ctx_pinter_refp_map_refi_0"] = ddr_map_dict["ctx_pinter_refp_map_refi_0_skip"]
+
+if __name__ == '__main__':
+    global count
+    count = 0
+    #1. 将dat文件中的寄存器offset信息写入到addr.txt中
+    f_addr_write()
+
     frm = 0
     while frm < FRM:
         REG_CONFIG = DIR+'/reg_config_'+str(frm)+'.txt'
-        MEM_CONFIG = DIR+'/mem_config_'+str(frm)+'.txt'
-        CHECK = DIR+'/check_'+str(frm)+'.txt'
         ADDR_MAP = DIR+'/addr_map_'+str(frm)+'.txt' 
         DDR_MAP = TV+'/ddr_map.txt'
         print(REG_CONFIG)
-        print(MEM_CONFIG)
-        print(CHECK)
         print(ADDR_MAP)
         print(DDR_MAP)
         f_addr_map = open(ADDR_MAP, 'w')
@@ -153,13 +163,8 @@ if __name__ == '__main__':
         for f_ddr_map_line in f_ddr_map.readlines():
             key, value = f_ddr_map_line.split()
             ddr_map_dict[key] = value
-        ddr_map_dict["ctx_map_mv"] = ddr_map_dict["ctx_map_map_mv"]
-        ddr_map_dict["ctx_map_scu"] = ddr_map_dict["ctx_map_map_scu"]
-        ddr_map_dict["ctx_map_refi"] =  ddr_map_dict["ctx_map_map_refi"]
-        ddr_map_dict["ctx_map_cu_mode"] = ddr_map_dict["ctx_map_map_cu_mode"]
-        ddr_map_dict["list_ptr_0_skip"] = ddr_map_dict["list_ptr_0"]
-        ddr_map_dict["ctx_pinter_refp_map_mv_0"] = ddr_map_dict["ctx_pinter_refp_map_mv_0_skip"]
-        ddr_map_dict["ctx_pinter_refp_map_refi_0"] = ddr_map_dict["ctx_pinter_refp_map_refi_0_skip"]
+        sed_ctx_map(ddr_map_dict)
+
         print(ddr_map_dict)
         f_ddr_map.seek(0, 0)    #偏移到文件头
         for raw in ddr_map_dict.keys():
