@@ -7,19 +7,18 @@ LCU=25
 W_LCU=5
 W_FRM = 3840
 H_FRM = 2112
-TOTAL=LCU+W_LCU-2
 TV=DIR+'/tv'
 ADDR=TV+'/addr_map.txt'
 LIBPIC=0
 I_PERIOD = 5
 
-
-
+#将ddr中的地址按照32字节对齐
 def align32(address):
     if address%32==0:
         return address
     else:
         return (address//32+1)*32
+
 #根据dcp cpr基地址将dcp cpr各个地址写进reg_config文件中
 def write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr):
     f_reg_config.write("Write_reg(dcp_ref_frm_addr_y_1, " + "{0:}".format(hex(dcp_base_addr)) + ");\n")
@@ -46,6 +45,20 @@ def write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr):
     cpr_base_addr = align32(cpr_base_addr + W_FRM * H_FRM)
     f_reg_config.write("Write_reg(cpr_ref_aux_addr_v_1, " + "{0:}".format(hex(cpr_base_addr)) + ");\n")
 
+'''
+ 0 | dcp |     | cpr 
+ 1 | cpr |     | dcp
+ 2 | dcp | cpr |
+ 3 | cpr | dcp |
+ 4 | dcp | cpr |
+ 5 | cpr | dcp |
+ 6 | cpr |     | dcp
+ 7 | dcp | cpr |
+ 8 | cpr | dcp |
+ 9 | dcp | cpr |
+10 | cpr | dcp |
+11 | dcp |     | cpr
+'''
 def dcp_cpr_memory_offset_libpic(f_reg_config):
     if count == 0 or count == 2 * I_PERIOD + 1:
         dcp_base_addr = 0x90000000
@@ -82,7 +95,7 @@ def dcp_cpr_memory_offset(f_reg_config, frm):
 #将dat文件中的寄存器offset信息写入到addr.txt中
 def f_addr_write():
     f_addr = open(ADDR, "w")
-    f_addr.write("sync start 0x0\n")
+    f_addr.write("sync_start 0x0\n")
     f_addr.write("lcu_count_clear 0x14\n")
     filtered_files = ["./json/"+file for file in os.listdir("json") if file.endswith(".dat")]
     #filtered_files = ["./json/" + x for x in filtered_files]
@@ -108,7 +121,11 @@ if __name__ == '__main__':
     #1. 将dat文件中的寄存器offset信息写入到addr.txt中
     f_addr_write()
 
-    frm = 0
+    if LIBPIC == 1:
+        frm = 0
+    else :
+        frm = 1
+
     while frm < FRM:
         REG_CONFIG = DIR+'/reg_config_'+str(frm)+'.txt'
         ADDR_MAP = DIR+'/addr_map_'+str(frm)+'.txt' 
@@ -131,12 +148,11 @@ if __name__ == '__main__':
         vegetables = "_" + str(frm) + "_" + str(lcu)
         print(vegetables)
         putmem = [putmem_node for putmem_node in putmem if vegetables in putmem_node]
+        putmem.append("input_mem_imgY_org_ap_V_" + str(frm) + "_0.txt")
+        putmem.append("input_mem_imgU_org_ap_V_" + str(frm) + "_0.txt")
+        putmem.append("input_mem_imgV_org_ap_V_" + str(frm) + "_0.txt")
         putmem = [TV +"/" + file for file in putmem ]
         print(putmem)
-        if not putmem:
-            print("skip this frm\n")
-            frm += 1
-            continue
 
         f_ddr_map = open(DDR_MAP, 'w+')
         #将各个memory的地址放入到DDR MAP 中
@@ -163,10 +179,11 @@ if __name__ == '__main__':
         for f_ddr_map_line in f_ddr_map.readlines():
             key, value = f_ddr_map_line.split()
             ddr_map_dict[key] = value
+        f_ddr_map.close()
         sed_ctx_map(ddr_map_dict)
 
         print(ddr_map_dict)
-        f_ddr_map.seek(0, 0)    #偏移到文件头
+        f_ddr_map = open(DDR_MAP, 'w')   #偏移到文件头
         for raw in ddr_map_dict.keys():
             f_addr_map.write(raw + ' ' + ddr_map_dict[raw] + "\n")
             f_ddr_map.write(raw + ' ' + ddr_map_dict[raw] + "\n")
