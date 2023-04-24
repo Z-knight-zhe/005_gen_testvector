@@ -194,12 +194,11 @@ if __name__ == '__main__':
         f_reg_config = open(REG_CONFIG, 'w')
         #f_mem_config = open(MEM_CONFIG, 'w')
         while lcu < LCU:
-
-            f_reg_config.write("Wait_irq_pos(0)\n")
             if lcu == 0:
                 f_reg_config.write("Write_reg(lcu_count_clear, 0x7);\n")
                 f_reg_config.write("Write_reg(clear_offset, 0x1);\n")
-                
+                f_reg_config.write("Write_reg(clear_offset, 0x0);\n")
+            f_reg_config.write("Wait_irq_pos(0)\n")
             input_reg = TV + "/input_reg_" + str(frm) + "_" + str(lcu) + ".txt"
             f_input_reg = open(input_reg, 'r')
             for line in f_input_reg.readlines():
