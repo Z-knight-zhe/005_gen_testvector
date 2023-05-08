@@ -1,5 +1,6 @@
 import os
 import re
+import math
 
 DIR='../../TestVector/avs3_core'
 FRM=10
@@ -167,7 +168,7 @@ if __name__ == '__main__':
                     f_ddr_map.write(output_to_ddr_map + "\n")
                     bit = int(first_line_split[1])
                     depth = int(first_line_split[2])
-                    offset += align32(bit * depth)
+                    offset += align32(math.ceil(bit * depth / 8))
             f_putmem.close()
         output_to_ddr_map = "bs_data" + " " + "{0:}".format(hex(offset))
         f_ddr_map.write(output_to_ddr_map + "\n")
