@@ -124,13 +124,14 @@ def f_addr_write():
     f_addr.close()
 
 def sed_ctx_map(ddr_map_dict):
-    ddr_map_dict["ctx_map_mv"] = ddr_map_dict["ctx_map_map_mv"]
-    ddr_map_dict["ctx_map_scu"] = ddr_map_dict["ctx_map_map_scu"]
-    ddr_map_dict["ctx_map_refi"] =  ddr_map_dict["ctx_map_map_refi"]
-    ddr_map_dict["ctx_map_cu_mode"] = ddr_map_dict["ctx_map_map_cu_mode"]
-    ddr_map_dict["list_ptr_0_skip"] = ddr_map_dict["list_ptr_0"]
-    ddr_map_dict["ctx_pinter_refp_map_mv_0"] = ddr_map_dict["ctx_pinter_refp_map_mv_0_skip"]
-    ddr_map_dict["ctx_pinter_refp_map_refi_0"] = ddr_map_dict["ctx_pinter_refp_map_refi_0_skip"]
+    # ddr_map_dict["ctx_map_mv"] = ddr_map_dict["ctx_map_map_mv"]
+    # ddr_map_dict["ctx_map_scu"] = ddr_map_dict["ctx_map_map_scu"]
+    # ddr_map_dict["ctx_map_refi"] =  ddr_map_dict["ctx_map_map_refi"]
+    # ddr_map_dict["ctx_map_cu_mode"] = ddr_map_dict["ctx_map_map_cu_mode"]
+    # ddr_map_dict["list_ptr_0_skip"] = ddr_map_dict["list_ptr_0"]
+    # ddr_map_dict["ctx_pinter_refp_map_mv_0"] = ddr_map_dict["ctx_pinter_refp_map_mv_0_skip"]
+    # ddr_map_dict["ctx_pinter_refp_map_refi_0"] = ddr_map_dict["ctx_pinter_refp_map_refi_0_skip"]
+    ddr_map_dict["ctx_map_refi_V"] =  ddr_map_dict["map_refi_V"]
 
 if __name__ == '__main__':
     #1. 将dat文件中的寄存器offset信息写入到addr.txt中
@@ -243,7 +244,7 @@ if __name__ == '__main__':
                 first_line = first_line.split()
                 if first_line[0] == "imgY_org_ap_V" or first_line[0] == "imgU_org_ap_V" or first_line[0] == "imgV_org_ap_V":
                     first_line[1] = "8"
-                if "ctx_map" in first_line[0] and lcu == 0:
+                if "map_refi_V" in first_line[0] and lcu == 0:
                     f_reg_config.write("Write_mem(" + first_line[0] + ", " + first_line[2] + ");\n")
                     '''
                     f_mem_config.write("Base:" + first_line[0] + " format:hex bits:" + first_line[1]\n)
@@ -251,7 +252,7 @@ if __name__ == '__main__':
                         f_mem_config.write(line)
                     f_mem_config.write("#Next Batch\n")
                     '''
-                elif "ctx_map" not in first_line[0]:
+                elif "map_refi_V" not in first_line[0]:
                     f_reg_config.write("Write_mem(" + first_line[0] + ", " + first_line[2] + ");\n")
                     '''
                     f_mem_config.write("Base:" + first_line[0] + " format:hex bits:" + first_line[1] + "\n")
