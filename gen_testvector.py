@@ -13,6 +13,8 @@ ADDR=TV+'/addr_map.txt'
 LIBPIC=0
 I_PERIOD = 5
 
+count = 0
+flag = 0
 #将ddr中的地址按照32字节对齐
 def align32(address):
     if address%32==0:
@@ -61,6 +63,8 @@ def write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr):
 11 | dcp |     | cpr
 '''
 def dcp_cpr_memory_offset_libpic(f_reg_config):
+    global count
+    global flag
     if count == 0 or count == 2 * I_PERIOD + 1:
         dcp_base_addr = 0x90000000
         cpr_base_addr = 0x94000000
@@ -69,18 +73,30 @@ def dcp_cpr_memory_offset_libpic(f_reg_config):
     elif count <= 2 * I_PERIOD and count > 0:
         #参考libpic图像
         if count % I_PERIOD == 1:
+            print("1")
             dcp_base_addr = 0x94000000
             cpr_base_addr = 0x90000000
             write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr)
-        #P帧中除去参考libpic外的单数帧
-        elif count % I_PERIOD != 1 and count % 2 == 1:
-            dcp_base_addr = 0x92000000
-            cpr_base_addr = 0x90000000
-            write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr)
-        elif count % I_PERIOD != 1 and count % 2 == 0:
+        if count % I_PERIOD == 2:
             dcp_base_addr = 0x90000000
             cpr_base_addr = 0x92000000
             write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr)
+            flag = 1
+            print("2")
+        elif count % I_PERIOD != 1 and count % I_PERIOD != 2:
+            if flag == 1:
+                dcp_base_addr = 0x92000000
+                cpr_base_addr = 0x90000000
+                write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr)
+                flag = 0
+                print("3")
+            elif flag == 0:
+                dcp_base_addr = 0x90000000
+                cpr_base_addr = 0x92000000
+                write_dcp_cpr_address(f_reg_config, dcp_base_addr, cpr_base_addr)
+                flag = 1
+                print("4")
+
     count += 1
 
 def dcp_cpr_memory_offset(f_reg_config, frm):
@@ -117,8 +133,6 @@ def sed_ctx_map(ddr_map_dict):
     ddr_map_dict["ctx_pinter_refp_map_refi_0"] = ddr_map_dict["ctx_pinter_refp_map_refi_0_skip"]
 
 if __name__ == '__main__':
-    global count
-    count = 0
     #1. 将dat文件中的寄存器offset信息写入到addr.txt中
     f_addr_write()
 
